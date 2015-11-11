@@ -44,9 +44,11 @@ router.post('/adduser', function(req, res) {
 });
 
 router.post('/updatethumbnails', function(req, res) {
+
   dir.files('/home/vin/code/chronoshot/photos/10/04', function(err, files) {
     if (err) throw err;
     console.log(files);
+
     //we have an array of files now, so now we'll iterate that array
     files.forEach(function(filePath) {
       var db = req.db;
@@ -66,6 +68,7 @@ router.post('/updatethumbnails', function(req, res) {
         }
       });
     });
+    
   });
 });
 
