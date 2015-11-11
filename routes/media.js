@@ -49,7 +49,7 @@ router.post('/updatethumbnails', function(req, res) {
     if (err) throw err;
     console.log(files);
 
-    //we have an array of files now, so now we'll iterate that array
+    // We have an array of files now, so now we'll iterate that array
     files.forEach(function(filePath) {
       var db = req.db;
       gm(filePath)
