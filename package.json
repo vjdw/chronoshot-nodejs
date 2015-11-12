@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
+    "build": "browserify /home/vin/code/chronoshot/chronoshot/client/global.js -o /home/vin/code/chronoshot/chronoshot/public/javascripts/global.js",
     "start": "node ./bin/www"
   },
   "dependencies": {
@@ -16,6 +17,11 @@
     "mongodb": "~2.0.33",
     "monk": "~1.0.1",
     "gm": "1.21.1",
-    "node-dir": "0.1.11"
+    "node-dir": "0.1.11",
+    "react": "0.14.2",
+    "react-dom": "0.14.2",
+    "react-infinity": "1.2.2",
+    "browserify": "~12.0.1",
+    "vinyl-transform": "~1.0.0"
   }
 }
