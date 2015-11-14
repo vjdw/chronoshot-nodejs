@@ -1,13 +1,49 @@
 var React = require('react');
 var ReactDOM = require('react-dom');
+var ReactList = require('react-list');
+
+class MyComponent extends React.Component {
+  //state = {
+  //  accounts: []
+  //};
+
+  componentWillMount() {
+    //loadAccounts(this.handleAccounts.bind(this));
+	this.setState({accounts: [{'name':'one'},{'name':'two'},{'name':'three'}]});
+  }
+
+  //handleAccounts(accounts) {
+  //  this.setState({accounts: [{'name':'one'},{'name':'two'},{'name':'three'}]});
+  //}
+
+  renderItem(index, key) {
+    return (<div key={key}>{this.state.accounts[index].name}</div>);
+  }
+
+  render() {
+    return (
+      <div>
+        <h1>Accounts</h1>
+        <div style={{overflow: 'auto', maxHeight: 400}}>
+          <ReactList
+            itemRenderer={this.renderItem.bind(this)}
+            length={this.state.accounts.length}
+            type='uniform'
+          />
+        </div>
+      </div>
+    );
+  }
+}
 
 // Add User button click
 $('#btnAddUser').on('click', addUser);
 // Add User
 function addUser(event) {
-	
+
 	ReactDOM.render(
-	React.createElement('h1', null, 'Hello, world!'),
+	//React.createElement('h1', null, 'Hello, world!'),
+	React.createElement(MyComponent, null),
 	document.getElementById('example')
 	);
 	
