@@ -9,7 +9,20 @@ class MyComponent extends React.Component {
 
   componentWillMount() {
     //loadAccounts(this.handleAccounts.bind(this));
-	this.setState({accounts: [{'name':'one'},{'name':'two'},{'name':'three'}]});
+	this.setState({accounts: [	
+								{'_id':'5648cbb7e490e2884b52d6db'}
+							]});
+							
+    $.get('media/filenames', function(result) {
+	  this.setState({accounts: result});
+      //if (this.isMounted()) {
+      //  this.setState({
+      //    username: lastGist.owner.login,
+      //    lastGistUrl: lastGist.html_url
+      //  });
+      //}
+	  }.bind(this)
+	);
   }
 
   //handleAccounts(accounts) {
@@ -17,7 +30,10 @@ class MyComponent extends React.Component {
   //}
 
   renderItem(index, key) {
-    return (<div key={key}>{this.state.accounts[index].name}</div>);
+    //return (<div key={key}>{this.state.accounts[index].name}</div>);
+	//return (<object data={"media?name=" + this.state.accounts[index]._id} />);
+	//return (<object data={"media?name=" + this.state.accounts[index]._id} type="image/jpg" />);
+	return (<div><img src={"media?name=" + this.state.accounts[index]._id} /></div>);
   }
 
   render() {
@@ -50,36 +66,36 @@ function addUser(event) {
     event.preventDefault();
 
 	// If it is, compile all user info into one object
-	var newUser = {
-		'username': $('#addUser fieldset input#inputUserName').val(),
-		'email': $('#addUser fieldset input#inputUserEmail').val()
-	}
+	//var newUser = {
+	//	'username': $('#addUser fieldset input#inputUserName').val(),
+	//	'email': $('#addUser fieldset input#inputUserEmail').val()
+	//}
 
 	// Use AJAX to post the object to our adduser service
-	$.ajax({
-		type: 'POST',
-		data: newUser,
-		url: '/media/adduser',
-		dataType: 'JSON'
-	}).done(function( response ) {
+	//$.ajax({
+	//	type: 'POST',
+	//	data: newUser,
+	//	url: '/media/adduser',
+	//	dataType: 'JSON'
+	//}).done(function( response ) {
 
-		// Check for successful (blank) response
-		if (response.msg === '') {
+	//	// Check for successful (blank) response
+	//	if (response.msg === '') {
+//
+	//		// Clear the form inputs
+	//		$('#addUser fieldset input').val('');
+//
+	//		// Update the table
+	//		//populateTable();
+//
+		//}
+		//else {
+//
+	//		// If something goes wrong, alert the error message that our service returned
+	//		alert('Error: ' + response.msg);
 
-			// Clear the form inputs
-			$('#addUser fieldset input').val('');
-
-			// Update the table
-			//populateTable();
-
-		}
-		else {
-
-			// If something goes wrong, alert the error message that our service returned
-			alert('Error: ' + response.msg);
-
-		}
-	});
+	//	}
+	//});
 };
 
 
