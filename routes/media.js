@@ -1,6 +1,7 @@
 var express = require('express');
 var gm = require('gm');
 var dir = require('node-dir');
+var async = require('async');
 var router = express.Router();
 
 // get list of all image filenames
@@ -58,6 +59,36 @@ router.get('/', function(req, res, next) {
    );
 });
 
+/////////////////////////////////////
+
+var q = async.queue(function (task, callback) {
+    
+      var db = task.req.db;
+      gm(task.filePath)
+      .resize(200, 200)
+      .toBuffer(function (err, buffer) {
+        if (err) {
+          callback(err);
+        }
+        else {
+          var collection = db.get('chronoshot');
+          collection.insert({"filename": task.filePath, "thumbnail": buffer}, function(err, result) {
+            var insertResult = (err === null) ? { msg: 'Inserted ' + task.filePath } : { msg: err };
+            console.log(insertResult);
+            callback();
+          });
+        }
+      });
+
+}, 4);
+
+// assign a callback
+q.drain = function() {
+    console.log('All thumbnail tasks completed.');
+}
+
+/////////////////////////////////////
+
 /*
  * POST to adduser.
  */
@@ -73,28 +104,19 @@ router.post('/adduser', function(req, res) {
 
 router.post('/updatethumbnails', function(req, res) {
 
-  dir.files('/home/vin/code/chronoshot/photos/10/04', function(err, files) {
+  //dir.files('/home/vin/code/chronoshot/photos/10/04', function(err, files) {
+    dir.files('/home/vin/code/chronoshot/photos', function(err, files) {
     if (err) throw err;
     console.log(files);
 
     // We have an array of files now, so now we'll iterate that array.
     files.forEach(function(filePath) {
-      var db = req.db;
-      gm(filePath)
-      .resize(120, 120)
-      .toBuffer(function (err, buffer) {
-        if (err) {
-            //next();
-        }
-        else {
-          var collection = db.get('chronoshot');
-          collection.insert({"filename": filePath, "thumbnail": buffer}, function(err, result) {
-            var insertResult = (err === null) ? { msg: 'Inserted ' + filePath } : { msg: err };
-            console.log(insertResult);
-            }
-          );
-        }
-      });
+      if (filePath.indexOf('.JPG') > -1) {
+        q.push({filePath: filePath, req: req}, function (err) {
+          if (err) throw err;
+          console.log('Finished creating thumbnail for ' + filePath);
+        });
+      }
     });
     
   });
