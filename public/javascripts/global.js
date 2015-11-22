@@ -58,8 +58,17 @@ var MyComponent = (function (_React$Component) {
 			//return (<object data={"media?name=" + this.state.accounts[index]._id} type="image/jpg" />);
 			return React.createElement(
 				'div',
-				null,
-				React.createElement('img', { src: "media?name=" + this.state.accounts[index]._id })
+				{ style: {
+						"display": "inline-block",
+						"margin": "6px",
+						//"box-shadow":"10px 10px 5px grey"
+						"box-shadow": " 2px 2px 8px 0px rgba(99,99,99,1)"
+					} },
+				React.createElement('img', { src: "media?name=" + this.state.accounts[index]._id,
+					style: {
+						"padding": "6px"
+					}
+				})
 			);
 		}
 	}, {
@@ -69,17 +78,15 @@ var MyComponent = (function (_React$Component) {
 				'div',
 				null,
 				React.createElement(
-					'h1',
-					null,
-					'Accounts'
-				),
-				React.createElement(
 					'div',
-					{ style: { overflow: 'auto', maxHeight: 400 } },
+					{ style: { overflow: 'auto', maxHeight: 800 } },
 					React.createElement(ReactList, {
 						itemRenderer: this.renderItem.bind(this),
+
 						length: this.state.accounts.length,
-						type: 'uniform'
+						type: 'uniform',
+						//type='variable'
+						useTranslate3d: true
 					})
 				)
 			);
@@ -152,6 +159,7 @@ function updateThumbnails(event) {
 		}
 	});
 };
+//"box-shadow":"inset 2px 2px 8px 0px rgba(85,85,85,1)"
 
 },{"react":160,"react-dom":3,"react-list":4}],2:[function(require,module,exports){
 // shim for using process in browser

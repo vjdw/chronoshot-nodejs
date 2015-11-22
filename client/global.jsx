@@ -33,18 +33,34 @@ class MyComponent extends React.Component {
     //return (<div key={key}>{this.state.accounts[index].name}</div>);
 	//return (<object data={"media?name=" + this.state.accounts[index]._id} />);
 	//return (<object data={"media?name=" + this.state.accounts[index]._id} type="image/jpg" />);
-	return (<div><img src={"media?name=" + this.state.accounts[index]._id} /></div>);
+	return (
+		<div	style={{
+					"display":"inline-block",
+					"margin":"6px",
+					 //"box-shadow":"10px 10px 5px grey"
+					 "box-shadow":" 2px 2px 8px 0px rgba(99,99,99,1)"
+					}}>
+			<img	src={"media?name=" + this.state.accounts[index]._id}
+					style={{
+						"padding":"6px",
+						//"box-shadow":"inset 2px 2px 8px 0px rgba(85,85,85,1)"
+						}}
+			/>
+		</div>
+	);
   }
 
   render() {
     return (
       <div>
-        <h1>Accounts</h1>
-        <div style={{overflow: 'auto', maxHeight: 400}}>
+        <div style={{overflow: 'auto', maxHeight: 800}}>
           <ReactList
             itemRenderer={this.renderItem.bind(this)}
+			
             length={this.state.accounts.length}
             type='uniform'
+			//type='variable'
+			useTranslate3d={true}
           />
         </div>
       </div>
