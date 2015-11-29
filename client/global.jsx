@@ -9,12 +9,13 @@ class MyComponent extends React.Component {
 
   componentWillMount() {
     //loadAccounts(this.handleAccounts.bind(this));
-	this.setState({accounts: [	
-								{'_id':'5648cbb7e490e2884b52d6db'}
+	this.setState({media: [	
+								//{'_id':'5648cbb7e490e2884b52d6db'}
+								{}
 							]});
 							
     $.get('media/filenames', function(result) {
-	  this.setState({accounts: result});
+	  this.setState({media: result});
       //if (this.isMounted()) {
       //  this.setState({
       //    username: lastGist.owner.login,
@@ -40,12 +41,14 @@ class MyComponent extends React.Component {
 					 //"box-shadow":"10px 10px 5px grey"
 					 "box-shadow":" 2px 2px 8px 0px rgba(99,99,99,1)"
 					}}>
-			<img	src={"media?name=" + this.state.accounts[index]._id}
-					style={{
-						"padding":"6px",
-						//"box-shadow":"inset 2px 2px 8px 0px rgba(85,85,85,1)"
-						}}
-			/>
+			<a 		href={"/media/" + this.state.media[index]._id} target="_self">
+				<img	src={"media?name=" + this.state.media[index]._id}
+						style={{
+							"padding":"6px",
+							//"box-shadow":"inset 2px 2px 8px 0px rgba(85,85,85,1)"
+							}}
+				/>
+			</a>
 		</div>
 	);
   }
@@ -57,7 +60,7 @@ class MyComponent extends React.Component {
           <ReactList
             itemRenderer={this.renderItem.bind(this)}
 			
-            length={this.state.accounts.length}
+            length={this.state.media.length}
             type='uniform'
 			//type='variable'
 			useTranslate3d={true}
