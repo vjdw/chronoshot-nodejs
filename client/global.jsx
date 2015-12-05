@@ -1,18 +1,16 @@
 var React = require('react');
 var ReactDOM = require('react-dom');
 var ReactList = require('react-list');
+var Modal = require('react-modal');
 
-class MyComponent extends React.Component {
+class ImageListComponent extends React.Component {
   //state = {
   //  accounts: []
   //};
 
   componentWillMount() {
-    //loadAccounts(this.handleAccounts.bind(this));
-	this.setState({media: [	
-								//{'_id':'5648cbb7e490e2884b52d6db'}
-								{}
-							]});
+
+	this.setState({media: [ {} ]});
 							
     $.get('media/filenames', function(result) {
 	  this.setState({media: result});
@@ -26,29 +24,25 @@ class MyComponent extends React.Component {
 	);
   }
 
-  //handleAccounts(accounts) {
-  //  this.setState({accounts: [{'name':'one'},{'name':'two'},{'name':'three'}]});
-  //}
-
+// <a 		href={"/media/original/" + this.state.media[index]._id} target="_self">
   renderItem(index, key) {
-    //return (<div key={key}>{this.state.accounts[index].name}</div>);
-	//return (<object data={"media?name=" + this.state.accounts[index]._id} />);
-	//return (<object data={"media?name=" + this.state.accounts[index]._id} type="image/jpg" />);
+
 	return (
 		<div	style={{
 					"display":"inline-block",
 					"margin":"6px",
 					 //"box-shadow":"10px 10px 5px grey"
 					 "box-shadow":" 2px 2px 8px 0px rgba(99,99,99,1)"
-					}}>
-			<a 		href={"/media/original/" + this.state.media[index]._id} target="_self">
+					}}
+				id={this.state.media[index]._id}
+				onClick={openImagePopup} >
+			
 				<img	src={"media/thumbnail/" + this.state.media[index]._id}
 						style={{
 							"padding":"6px",
 							//"box-shadow":"inset 2px 2px 8px 0px rgba(85,85,85,1)"
 							}}
 				/>
-			</a>
 		</div>
 	);
   }
@@ -56,7 +50,7 @@ class MyComponent extends React.Component {
   render() {
     return (
       <div>
-        <div style={{overflow: 'auto', maxHeight: 800}}>
+        <div style={{overflow: 'auto', maxHeight: 400}}>
           <ReactList
             itemRenderer={this.renderItem.bind(this)}
 			
@@ -71,15 +65,61 @@ class MyComponent extends React.Component {
   }
 }
 
+const customStyles = {
+  content : {
+    top                   : '50%',
+    left                  : '50%',
+    right                 : 'auto',
+    bottom                : 'auto',
+    marginRight           : '-50%',
+    transform             : 'translate(-50%, -50%)'
+  }
+};
+
+var ImagePopup = React.createClass({
+ 
+  getInitialState: function() {
+    return { modalIsOpen: false };
+  },
+ 
+  openModal: function(event) {
+    this.setState({modalIsOpen: true, imageId: event.currentTarget.id});
+  },
+ 
+  closeModal: function() {
+    this.setState({modalIsOpen: false});
+  },
+ 
+  render: function() {
+    return (
+      <div>
+        <Modal
+          isOpen={this.state.modalIsOpen}
+          onRequestClose={this.closeModal}
+          style={customStyles} >
+          <img src={"/media/original/" + this.state.imageId} width="65%" onClick={this.closeModal} />
+          <h2>Image ID: {this.state.imageId}</h2>
+        </Modal>
+      </div>
+    );
+  }
+});
+
+function openImagePopup(event) {
+	//alert(event.currentTarget.id);
+	var x = ReactDOM.render(<ImagePopup/>, document.getElementById('ImagePopupPlaceholder'));
+	x.openModal(event);
+}
+
 // Add User button click
 $('#btnAddUser').on('click', addUser);
 // Add User
 function addUser(event) {
 
 	ReactDOM.render(
-	//React.createElement('h1', null, 'Hello, world!'),
-	React.createElement(MyComponent, null),
-	document.getElementById('example')
+		//React.createElement('h1', null, 'Hello, world!'),
+		React.createElement(ImageListComponent, null),
+		document.getElementById('ImageListPlaceholder')
 	);
 	
     event.preventDefault();
