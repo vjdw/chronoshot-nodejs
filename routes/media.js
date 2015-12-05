@@ -1,4 +1,5 @@
 var express = require('express');
+var fs = require('fs');
 var gm = require('gm');
 var dir = require('node-dir');
 var async = require('async');
@@ -10,36 +11,23 @@ router.get('/filenames', function(req, res, next) {
   var db = req.db;
   var collection = db.get('chronoshot');
   collection.find(  {},
-                    { fields : { thumbnail:0 }, sort: {datetime: 1} }
-                    ,
+                    { fields : { thumbnail:0 }, sort: {datetime: 1} },
                     function(e, dbResult) {
                       res.send(dbResult);
                     });
-    //).sort({datetime: 1}, function(e, dbResult) {
-   //                    res.send(dbResult);
-    //                 });
 });
 
-// get single image
-router.get('/', function(req, res, next) {
-  
-  // var options = {
-  //   //root: __dirname + '/public/',
-  //   dotfiles: 'deny',
-  //   headers: {
-  //       'x-timestamp': Date.now(),
-  //       'x-sent': true,
-  //   }
-  // };
+// get single thumbnail image
+router.get('/thumbnail/:id', function(req, res, next) {
   
   var db = req.db;
   var collection = db.get('chronoshot');
 
-  collection.find(  { _id: req.query['name'] },
+  collection.find(  { _id: req.params.id },
                     { fields : { thumbnail:1 } },
                     function(e, dbResult) {
                       if (dbResult[0] === undefined || dbResult[0].thumbnail === null) {
-                        console.log('_id ' + req.query['name'] + ' not found.');
+                        console.log('_id ' + req.params.id + ' not found.');
                       }
                       else {
                         res.writeHead(200, {'Content-Type': 'image/jpg' });
@@ -49,18 +37,26 @@ router.get('/', function(req, res, next) {
    );
 });
 
-// /*
-//  * POST to adduser.
-//  */
-// router.post('/adduser', function(req, res) {
-//   var db = req.db;
-//   var collection = db.get('chronoshot');
-//   collection.insert(req.body, function(err, result){
-//       res.send(
-//           (err === null) ? { msg: '' } : { msg: err }
-//       );
-//   });
-// });
+// get single original size image
+router.get('/original/:id', function(req, res, next) {
+  
+  var db = req.db;
+  var collection = db.get('chronoshot');
+
+  collection.find(  { _id: req.params.id },
+                    { fields : { filename:1 } },
+                    function(e, dbResult) {
+                      if (dbResult[0] === undefined || dbResult[0].thumbnail === null) {
+                        console.log('_id ' + req.params.id + ' not found.');
+                      }
+                      else {
+                        var img = fs.readFileSync(dbResult[0].filename);
+                        res.writeHead(200, {'Content-Type': 'image/jpg' });
+                        res.end(img, 'binary');
+                      }
+                    }
+   );
+});
 
 router.post('/updatethumbnails', function(req, res) {
 

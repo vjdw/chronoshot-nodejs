@@ -41,8 +41,8 @@ class MyComponent extends React.Component {
 					 //"box-shadow":"10px 10px 5px grey"
 					 "box-shadow":" 2px 2px 8px 0px rgba(99,99,99,1)"
 					}}>
-			<a 		href={"/media/" + this.state.media[index]._id} target="_self">
-				<img	src={"media?name=" + this.state.media[index]._id}
+			<a 		href={"/media/original/" + this.state.media[index]._id} target="_self">
+				<img	src={"media/thumbnail/" + this.state.media[index]._id}
 						style={{
 							"padding":"6px",
 							//"box-shadow":"inset 2px 2px 8px 0px rgba(85,85,85,1)"

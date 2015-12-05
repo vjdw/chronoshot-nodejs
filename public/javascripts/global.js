@@ -68,8 +68,8 @@ var MyComponent = (function (_React$Component) {
 					} },
 				React.createElement(
 					'a',
-					{ href: "/media/" + this.state.media[index]._id, target: '_self' },
-					React.createElement('img', { src: "media?name=" + this.state.media[index]._id,
+					{ href: "/media/original/" + this.state.media[index]._id, target: '_self' },
+					React.createElement('img', { src: "media/thumbnail/" + this.state.media[index]._id,
 						style: {
 							"padding": "6px"
 						}
