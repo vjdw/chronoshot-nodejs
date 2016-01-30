@@ -50,9 +50,17 @@ router.get('/original/:id', function(req, res, next) {
                         console.log('_id ' + req.params.id + ' not found.');
                       }
                       else {
-                        var img = fs.readFileSync(dbResult[0].filename);
-                        res.writeHead(200, {'Content-Type': 'image/jpg' });
-                        res.end(img, 'binary');
+                        gm(dbResult[0].filename)
+                        .autoOrient()
+                        .toBuffer(function (err, buffer) {
+                            res.writeHead(200, {'Content-Type': 'image/jpg' });
+                            res.end(buffer, 'binary');
+                        });
+                        
+                        // // A bit faster, but not auto-oriented.
+                        // var img = fs.readFileSync(dbResult[0].filename);
+                        // res.writeHead(200, {'Content-Type': 'image/jpg' });
+                        // res.end(img, 'binary');
                       }
                     }
    );
@@ -61,7 +69,7 @@ router.get('/original/:id', function(req, res, next) {
 router.post('/updatethumbnails', function(req, res) {
 
   dir.files('/home/vin/code/chronoshot/photos', function(err, files) {
-  //dir.files('/home/vin/code/chronoshot/photos/10/18', function(err, files) {
+  //dir.files('/media/data/photos', function(err, files) {
 
   if (err) throw err;
   console.log(files);
@@ -90,7 +98,10 @@ var thumbnailGeneratorQueue = async.queue(function (task, callback) {
   var db = task.req.db;
   
   gm(task.filePath)
-  .resize(200, 200)
+  .autoOrient()
+  .resize('200', '200', '^')
+  .gravity('Center')
+  .crop('200', '200')
   .toBuffer(function (err, buffer) {
     if (err) {
       callback(err);

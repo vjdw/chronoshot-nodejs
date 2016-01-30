@@ -15,202 +15,165 @@ var ReactList = require('react-list');
 var Modal = require('react-modal');
 
 var ImageListComponent = (function (_React$Component) {
-	_inherits(ImageListComponent, _React$Component);
+  _inherits(ImageListComponent, _React$Component);
 
-	function ImageListComponent() {
-		_classCallCheck(this, ImageListComponent);
+  function ImageListComponent() {
+    _classCallCheck(this, ImageListComponent);
 
-		_get(Object.getPrototypeOf(ImageListComponent.prototype), 'constructor', this).apply(this, arguments);
-	}
+    _get(Object.getPrototypeOf(ImageListComponent.prototype), 'constructor', this).apply(this, arguments);
+  }
 
-	_createClass(ImageListComponent, [{
-		key: 'componentWillMount',
+  _createClass(ImageListComponent, [{
+    key: 'componentWillMount',
+    value: function componentWillMount() {
 
-		//state = {
-		//  accounts: []
-		//};
+      this.setState({ media: [{}] });
 
-		value: function componentWillMount() {
+      $.get('media/filenames', (function (result) {
+        this.setState({ media: result });
+        //if (this.isMounted()) {
+        //  this.setState({
+        //    username: lastGist.owner.login,
+        //    lastGistUrl: lastGist.html_url
+        //  });
+        //}
+      }).bind(this));
+    }
 
-			this.setState({ media: [{}] });
+    // <a 		href={"/media/original/" + this.state.media[index]._id} target="_self">
+  }, {
+    key: 'renderItem',
+    value: function renderItem(index, key) {
+      return React.createElement(
+        'div',
+        { style: {
+            "display": "inline-block",
+            "margin": "6px",
+            "boxShadow": " 2px 2px 8px 0px rgba(99,99,99,1)"
+          },
+          id: this.state.media[index]._id,
+          'data-filename': this.state.media[index].filename,
+          onClick: openImagePopup },
+        React.createElement('img', { src: "media/thumbnail/" + this.state.media[index]._id,
+          style: {
+            "padding": "6px"
+          }
+        })
+      );
+    }
+  }, {
+    key: 'render',
+    value: function render() {
+      return React.createElement(
+        'div',
+        { style: { overflow: 'auto', height: '100%' } },
+        React.createElement(ReactList, {
+          itemRenderer: this.renderItem.bind(this),
 
-			$.get('media/filenames', (function (result) {
-				this.setState({ media: result });
-				//if (this.isMounted()) {
-				//  this.setState({
-				//    username: lastGist.owner.login,
-				//    lastGistUrl: lastGist.html_url
-				//  });
-				//}
-			}).bind(this));
-		}
+          length: this.state.media.length,
+          type: 'uniform',
+          //type='variable'
+          useTranslate3d: true
+        })
+      );
+    }
+  }]);
 
-		// <a 		href={"/media/original/" + this.state.media[index]._id} target="_self">
-	}, {
-		key: 'renderItem',
-		value: function renderItem(index, key) {
-
-			return React.createElement(
-				'div',
-				{ style: {
-						"display": "inline-block",
-						"margin": "6px",
-						//"box-shadow":"10px 10px 5px grey"
-						"box-shadow": " 2px 2px 8px 0px rgba(99,99,99,1)"
-					},
-					id: this.state.media[index]._id,
-					onClick: openImagePopup },
-				React.createElement('img', { src: "media/thumbnail/" + this.state.media[index]._id,
-					style: {
-						"padding": "6px"
-					}
-				})
-			);
-		}
-	}, {
-		key: 'render',
-		value: function render() {
-			return React.createElement(
-				'div',
-				null,
-				React.createElement(
-					'div',
-					{ style: { overflow: 'auto', maxHeight: 400 } },
-					React.createElement(ReactList, {
-						itemRenderer: this.renderItem.bind(this),
-
-						length: this.state.media.length,
-						type: 'uniform',
-						//type='variable'
-						useTranslate3d: true
-					})
-				)
-			);
-		}
-	}]);
-
-	return ImageListComponent;
+  return ImageListComponent;
 })(React.Component);
 
 var customStyles = {
-	content: {
-		top: '50%',
-		left: '50%',
-		right: 'auto',
-		bottom: 'auto',
-		marginRight: '-50%',
-		transform: 'translate(-50%, -50%)'
-	}
+  content: {
+    top: '50%',
+    left: '50%',
+    right: 'auto',
+    bottom: 'auto',
+    marginRight: '-50%',
+    transform: 'translate(-50%, -50%)'
+  }
 };
 
 var ImagePopup = React.createClass({
-	displayName: 'ImagePopup',
+  displayName: 'ImagePopup',
 
-	getInitialState: function getInitialState() {
-		return { modalIsOpen: false };
-	},
+  getInitialState: function getInitialState() {
+    return { modalIsOpen: false };
+  },
 
-	openModal: function openModal(event) {
-		this.setState({ modalIsOpen: true, imageId: event.currentTarget.id });
-	},
+  openModal: function openModal(event) {
+    this.setState({ modalIsOpen: true, imageId: event.currentTarget.id, filename: event.currentTarget.dataset.filename });
+  },
 
-	closeModal: function closeModal() {
-		this.setState({ modalIsOpen: false });
-	},
+  closeModal: function closeModal() {
+    this.setState({ modalIsOpen: false });
+  },
 
-	render: function render() {
-		return React.createElement(
-			'div',
-			null,
-			React.createElement(
-				Modal,
-				{
-					isOpen: this.state.modalIsOpen,
-					onRequestClose: this.closeModal,
-					style: customStyles },
-				React.createElement('img', { src: "/media/original/" + this.state.imageId, width: '65%', onClick: this.closeModal }),
-				React.createElement(
-					'h2',
-					null,
-					'Image ID: ',
-					this.state.imageId
-				)
-			)
-		);
-	}
+  render: function render() {
+    return React.createElement(
+      'div',
+      null,
+      React.createElement(
+        Modal,
+        {
+          isOpen: this.state.modalIsOpen,
+          onRequestClose: this.closeModal,
+          style: customStyles },
+        React.createElement('img', { src: "/media/original/" + this.state.imageId, width: '65%', onClick: this.closeModal }),
+        React.createElement(
+          'h2',
+          null,
+          'Image ID: ',
+          this.state.imageId
+        ),
+        React.createElement(
+          'h2',
+          null,
+          'File: ',
+          this.state.filename
+        )
+      )
+    );
+  }
 });
 
 function openImagePopup(event) {
-	//alert(event.currentTarget.id);
-	var x = ReactDOM.render(React.createElement(ImagePopup, null), document.getElementById('ImagePopupPlaceholder'));
-	x.openModal(event);
+  //alert(event.currentTarget.id);
+  var popup = ReactDOM.render(React.createElement(ImagePopup, null), document.getElementById('ImagePopupPlaceholder'));
+  popup.openModal(event);
 }
 
 // Add User button click
-$('#btnAddUser').on('click', addUser);
+$('#btnLoadImageGrid').on('click', loadImageGrid);
+$(document).ready(loadImageGrid);
+
 // Add User
-function addUser(event) {
+function loadImageGrid(event) {
 
-	ReactDOM.render(
-	//React.createElement('h1', null, 'Hello, world!'),
-	React.createElement(ImageListComponent, null), document.getElementById('ImageListPlaceholder'));
+  ReactDOM.render(React.createElement(ImageListComponent, null), document.getElementById('ImageListPlaceholder'));
 
-	event.preventDefault();
-
-	// If it is, compile all user info into one object
-	//var newUser = {
-	//	'username': $('#addUser fieldset input#inputUserName').val(),
-	//	'email': $('#addUser fieldset input#inputUserEmail').val()
-	//}
-
-	// Use AJAX to post the object to our adduser service
-	//$.ajax({
-	//	type: 'POST',
-	//	data: newUser,
-	//	url: '/media/adduser',
-	//	dataType: 'JSON'
-	//}).done(function( response ) {
-
-	//	// Check for successful (blank) response
-	//	if (response.msg === '') {
-	//
-	//		// Clear the form inputs
-	//		$('#addUser fieldset input').val('');
-	//
-	//		// Update the table
-	//		//populateTable();
-	//
-	//}
-	//else {
-	//
-	//		// If something goes wrong, alert the error message that our service returned
-	//		alert('Error: ' + response.msg);
-
-	//	}
-	//});
+  event.preventDefault();
 };
 
 $('#btnUpdateThumbnails').on('click', updateThumbnails);
 function updateThumbnails(event) {
-	event.preventDefault();
+  event.preventDefault();
 
-	// Use AJAX to post the object to our adduser service
-	$.ajax({
-		type: 'POST',
-		data: {},
-		url: '/media/updatethumbnails',
-		dataType: 'JSON'
-	}).done(function (response) {
+  // Use AJAX to post the object to our adduser service
+  $.ajax({
+    type: 'POST',
+    data: {},
+    url: '/media/updatethumbnails',
+    dataType: 'JSON'
+  }).done(function (response) {
 
-		// Check for successful (blank) response
-		if (response.msg === '') {} else {
+    // Check for successful (blank) response
+    if (response.msg === '') {} else {
 
-			// If something goes wrong, alert the error message that our service returned
-			alert('Error: ' + response.msg);
-		}
-	});
+      // If something goes wrong, alert the error message that our service returned
+      alert('Error: ' + response.msg);
+    }
+  });
 };
-//"box-shadow":"inset 2px 2px 8px 0px rgba(85,85,85,1)"
 
 },{"react":180,"react-dom":3,"react-list":4,"react-modal":11}],2:[function(require,module,exports){
 // shim for using process in browser

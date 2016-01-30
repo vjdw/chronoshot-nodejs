@@ -4,9 +4,6 @@ var ReactList = require('react-list');
 var Modal = require('react-modal');
 
 class ImageListComponent extends React.Component {
-  //state = {
-  //  accounts: []
-  //};
 
   componentWillMount() {
 
@@ -24,23 +21,20 @@ class ImageListComponent extends React.Component {
 	);
   }
 
-// <a 		href={"/media/original/" + this.state.media[index]._id} target="_self">
   renderItem(index, key) {
-
 	return (
 		<div	style={{
 					"display":"inline-block",
 					"margin":"6px",
-					 //"box-shadow":"10px 10px 5px grey"
-					 "box-shadow":" 2px 2px 8px 0px rgba(99,99,99,1)"
+                    "boxShadow":" 2px 2px 8px 0px rgba(99,99,99,1)"
 					}}
 				id={this.state.media[index]._id}
+                data-filename={this.state.media[index].filename}
 				onClick={openImagePopup} >
 			
 				<img	src={"media/thumbnail/" + this.state.media[index]._id}
 						style={{
-							"padding":"6px",
-							//"box-shadow":"inset 2px 2px 8px 0px rgba(85,85,85,1)"
+							"padding":"6px"
 							}}
 				/>
 		</div>
@@ -49,8 +43,7 @@ class ImageListComponent extends React.Component {
 
   render() {
     return (
-      <div>
-        <div style={{overflow: 'auto', maxHeight: 400}}>
+        <div style={{overflow: 'auto', height: '100%'}}>
           <ReactList
             itemRenderer={this.renderItem.bind(this)}
 			
@@ -60,7 +53,6 @@ class ImageListComponent extends React.Component {
 			useTranslate3d={true}
           />
         </div>
-      </div>
     );
   }
 }
@@ -83,7 +75,7 @@ var ImagePopup = React.createClass({
   },
  
   openModal: function(event) {
-    this.setState({modalIsOpen: true, imageId: event.currentTarget.id});
+    this.setState({modalIsOpen: true, imageId: event.currentTarget.id, filename: event.currentTarget.dataset.filename});
   },
  
   closeModal: function() {
@@ -99,6 +91,7 @@ var ImagePopup = React.createClass({
           style={customStyles} >
           <img src={"/media/original/" + this.state.imageId} width="65%" onClick={this.closeModal} />
           <h2>Image ID: {this.state.imageId}</h2>
+          <h2>File: {this.state.filename}</h2>
         </Modal>
       </div>
     );
@@ -107,54 +100,23 @@ var ImagePopup = React.createClass({
 
 function openImagePopup(event) {
 	//alert(event.currentTarget.id);
-	var x = ReactDOM.render(<ImagePopup/>, document.getElementById('ImagePopupPlaceholder'));
-	x.openModal(event);
+	var popup = ReactDOM.render(<ImagePopup/>, document.getElementById('ImagePopupPlaceholder'));
+	popup.openModal(event);
 }
 
-// Add User button click
-$('#btnAddUser').on('click', addUser);
-// Add User
-function addUser(event) {
+// Add button click handler.
+$('#btnLoadImageGrid').on('click', loadImageGrid);
+$(document).ready(loadImageGrid);
+
+// Load the main grid of photos.
+function loadImageGrid(event) {
 
 	ReactDOM.render(
-		//React.createElement('h1', null, 'Hello, world!'),
 		React.createElement(ImageListComponent, null),
 		document.getElementById('ImageListPlaceholder')
 	);
 	
     event.preventDefault();
-
-	// If it is, compile all user info into one object
-	//var newUser = {
-	//	'username': $('#addUser fieldset input#inputUserName').val(),
-	//	'email': $('#addUser fieldset input#inputUserEmail').val()
-	//}
-
-	// Use AJAX to post the object to our adduser service
-	//$.ajax({
-	//	type: 'POST',
-	//	data: newUser,
-	//	url: '/media/adduser',
-	//	dataType: 'JSON'
-	//}).done(function( response ) {
-
-	//	// Check for successful (blank) response
-	//	if (response.msg === '') {
-//
-	//		// Clear the form inputs
-	//		$('#addUser fieldset input').val('');
-//
-	//		// Update the table
-	//		//populateTable();
-//
-		//}
-		//else {
-//
-	//		// If something goes wrong, alert the error message that our service returned
-	//		alert('Error: ' + response.msg);
-
-	//	}
-	//});
 };
 
 
