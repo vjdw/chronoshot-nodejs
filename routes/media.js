@@ -1,10 +1,8 @@
 var express = require('express');
-var fs = require('fs');
-var gm = require('gm');
 var dir = require('node-dir');
-var async = require('async');
 var router = express.Router();
-var ExifImage = require('exif').ExifImage;
+var gm = require('gm');
+var common = require('../common');
 
 // get list of all image filenames
 router.get('/filenames', function(req, res, next) {
@@ -68,74 +66,26 @@ router.get('/original/:id', function(req, res, next) {
 
 router.post('/updatethumbnails', function(req, res) {
 
-  dir.files('/home/vin/code/chronoshot/photos', function(err, files) {
-  //dir.files('/media/data/photos', function(err, files) {
+  var db = req.db;
+  var collection = db.get('chronoshot');
+  collection.index( {datetime: 1} );
+  collection.index( {filename: 1} );
 
-  if (err) throw err;
-  console.log(files);
+//dir.files('/home/vin/code/photos', function(err, files) {
+dir.files('/media/data/photos', function(err, files) {
+    if (err) throw err;
+    console.log(files);
 
-  // We have an array of files now, so now we'll iterate that array.
-  files.forEach(function(filePath) {
-    if (filePath.indexOf('.JPG') > -1) {
-      thumbnailGeneratorQueue.push({filePath: filePath, req: req}, function (err) {
-        if (err) throw err;
-          console.log('Finished creating thumbnail for ' + filePath);
-      });
-    }
-  });
-    
+    files.forEach(function(filePath) {
+        if (filePath.indexOf('.JPG') > -1) {
+            common.EnqueueImageImport({filePath: filePath, db: req.db}, function (err) {
+                if (err) throw err;
+            });
+        }
+    });
+   
   });
 });
 
 module.exports = router;
 
-////////////////////////////////////////////////////////////////////////////////
-// BEGIN - Async thumbnail generation stuff.
-////////////////////////////////////////////////////////////////////////////////
-var maxAsyncThreads = 4;
-var thumbnailGeneratorQueue = async.queue(function (task, callback) {
-  
-  var db = task.req.db;
-  
-  gm(task.filePath)
-  .autoOrient()
-  .resize('200', '200', '^')
-  .gravity('Center')
-  .crop('200', '200')
-  .toBuffer(function (err, buffer) {
-    if (err) {
-      callback(err);
-    }
-    else {
-      
-      new ExifImage({ image: task.filePath}, function (error, exifData) {
-        if (error) {
-          console.log('Exif error: ' + error.message);
-        }
-        else {
-          console.log(exifData.exif.DateTimeOriginal);
-          var dateTimeOriginal = exifData.exif.DateTimeOriginal
-          //console.log(exifData.image.Orientation);
-          
-          var collection = db.get('chronoshot');
-          collection.insert({"filename": task.filePath, "datetime":dateTimeOriginal, "thumbnail": buffer}, function(err, result) {
-            var insertResult = (err === null) ? { msg: 'Inserted ' + task.filePath } : { msg: err };
-            console.log(insertResult);
-            callback();
-          });
-        }
-      });
-      
-      
-    }
-  });
-
-}, maxAsyncThreads);
-
-// assign a callback
-thumbnailGeneratorQueue.drain = function() {
-  console.log('All thumbnail tasks completed.');
-}
-////////////////////////////////////////////////////////////////////////////////
-// END - Async thumbnail generation stuff.
-////////////////////////////////////////////////////////////////////////////////

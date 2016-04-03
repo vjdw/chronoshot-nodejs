@@ -10,6 +10,8 @@ var mongo = require('mongodb');
 var monk = require('monk');
 var db = monk('localhost:27017/chronoshot');
 
+var common = require('./common');
+
 var app = express();
 
 // Make our db accessible to our router
@@ -22,8 +24,22 @@ var routes = require('./routes/index');
 var media = require('./routes/media');
 var users = require('./routes/users');
 
-var msg = 'hello world';
-console.log(msg);
+console.log('chronoshot is up.');
+
+// Ensure indexes exist.
+var collection = db.get('chronoshot');
+collection.index( {datetime: 1} );
+collection.index( {filename: 1} );
+
+// Monitor photo directory for changes.
+var chokidar = require('chokidar');
+//chokidar.watch('/home/vin/code/photos/', {ignored: /[\/\\]\./}).on('all', function(event, path) {
+chokidar.watch('/media/data/photos/', {ignored: /[\/\\]\./}).on('all', function(event, path) {
+  //console.log(event, path);
+  common.EnqueueImageImport({filePath: path, db: db}, function (err) {
+    if (err) throw err;
+  });
+});
 
 //routes.
 

@@ -39,8 +39,6 @@ var ImageListComponent = (function (_React$Component) {
         //}
       }).bind(this));
     }
-
-    // <a 		href={"/media/original/" + this.state.media[index]._id} target="_self">
   }, {
     key: 'renderItem',
     value: function renderItem(index, key) {
@@ -142,11 +140,11 @@ function openImagePopup(event) {
   popup.openModal(event);
 }
 
-// Add User button click
+// Add button click handler.
 $('#btnLoadImageGrid').on('click', loadImageGrid);
 $(document).ready(loadImageGrid);
 
-// Add User
+// Load the main grid of photos.
 function loadImageGrid(event) {
 
   ReactDOM.render(React.createElement(ImageListComponent, null), document.getElementById('ImageListPlaceholder'));
@@ -291,7 +289,7 @@ module.exports = require('react/lib/ReactDOM');
 
   var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
-  var _get = function get(_x2, _x3, _x4) { var _again = true; _function: while (_again) { var object = _x2, property = _x3, receiver = _x4; desc = parent = getter = undefined; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x2 = parent; _x3 = property; _x4 = receiver; _again = true; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
+  var _get = function get(_x3, _x4, _x5) { var _again = true; _function: while (_again) { var object = _x3, property = _x4, receiver = _x5; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x3 = parent; _x4 = property; _x5 = receiver; _again = true; desc = parent = undefined; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
 
   function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
@@ -321,8 +319,11 @@ module.exports = require('react/lib/ReactDOM');
   var OFFSET_SIZE_KEYS = { x: 'offsetWidth', y: 'offsetHeight' };
   var OFFSET_START_KEYS = { x: 'offsetLeft', y: 'offsetTop' };
   var OVERFLOW_KEYS = { x: 'overflowX', y: 'overflowY' };
-  var SCROLL_KEYS = { x: 'scrollLeft', y: 'scrollTop' };
+  var SCROLL_SIZE_KEYS = { x: 'scrollWidth', y: 'scrollHeight' };
+  var SCROLL_START_KEYS = { x: 'scrollLeft', y: 'scrollTop' };
   var SIZE_KEYS = { x: 'width', y: 'height' };
+
+  var NOOP = function NOOP() {};
 
   var _default = (function (_Component) {
     _inherits(_default, _Component);
@@ -341,6 +342,7 @@ module.exports = require('react/lib/ReactDOM');
         itemsRenderer: _react.PropTypes.func,
         length: _react.PropTypes.number,
         pageSize: _react.PropTypes.number,
+        scrollParentGetter: _react.PropTypes.func,
         threshold: _react.PropTypes.number,
         type: _react.PropTypes.oneOf(['simple', 'variable', 'uniform']),
         useTranslate3d: _react.PropTypes.bool
@@ -368,6 +370,7 @@ module.exports = require('react/lib/ReactDOM');
         },
         length: 0,
         pageSize: 10,
+        scrollParentGetter: null,
         threshold: 100,
         type: 'simple',
         useTranslate3d: false
@@ -408,15 +411,9 @@ module.exports = require('react/lib/ReactDOM');
     }, {
       key: 'componentDidMount',
       value: function componentDidMount() {
-        this.scrollParent = this.getScrollParent();
         this.updateFrame = this.updateFrame.bind(this);
         window.addEventListener('resize', this.updateFrame);
-        this.scrollParent.addEventListener('scroll', this.updateFrame);
-        this.updateFrame();
-        var initialIndex = this.props.initialIndex;
-
-        if (initialIndex == null) return;
-        this.afId = requestAnimationFrame(this.scrollTo.bind(this, initialIndex));
+        this.updateFrame(this.scrollTo.bind(this, this.props.initialIndex));
       }
     }, {
       key: 'shouldComponentUpdate',
@@ -433,7 +430,7 @@ module.exports = require('react/lib/ReactDOM');
       value: function componentWillUnmount() {
         window.removeEventListener('resize', this.updateFrame);
         this.scrollParent.removeEventListener('scroll', this.updateFrame);
-        cancelAnimationFrame(this.afId);
+        this.scrollParent.removeEventListener('mousewheel', NOOP);
       }
     }, {
       key: 'getOffset',
@@ -448,8 +445,13 @@ module.exports = require('react/lib/ReactDOM');
     }, {
       key: 'getScrollParent',
       value: function getScrollParent() {
+        var _props2 = this.props;
+        var axis = _props2.axis;
+        var scrollParentGetter = _props2.scrollParentGetter;
+
+        if (scrollParentGetter) return scrollParentGetter();
         var el = findDOMNode(this);
-        var overflowKey = OVERFLOW_KEYS[this.props.axis];
+        var overflowKey = OVERFLOW_KEYS[axis];
         while (el = el.parentElement) {
           switch (window.getComputedStyle(el)[overflowKey]) {
             case 'auto':case 'scroll':case 'overlay':
@@ -464,24 +466,27 @@ module.exports = require('react/lib/ReactDOM');
         var scrollParent = this.scrollParent;
         var axis = this.props.axis;
 
-        var scrollKey = SCROLL_KEYS[axis];
+        var scrollKey = SCROLL_START_KEYS[axis];
         var scroll = scrollParent === window ?
         // Firefox always returns document.body[scrollKey] as 0 and Chrome/Safari
         // always return document.documentElement[scrollKey] as 0, so take
         // whichever has a value.
         document.body[scrollKey] || document.documentElement[scrollKey] : scrollParent[scrollKey];
         var el = findDOMNode(this);
-        return scroll - (this.getOffset(el) - this.getOffset(scrollParent));
+        var target = scroll - (this.getOffset(el) - this.getOffset(scrollParent));
+        var max = this.getScrollSize() - this.getViewportSize();
+        return Math.max(0, Math.min(target, max));
       }
     }, {
       key: 'setScroll',
       value: function setScroll(offset) {
         var scrollParent = this.scrollParent;
+        var axis = this.props.axis;
 
         if (scrollParent === window) {
           return window.scrollTo(0, this.getOffset(findDOMNode(this)) + offset);
         }
-        scrollParent[SCROLL_KEYS[this.props.axis]] += offset - this.getScroll();
+        scrollParent[SCROLL_START_KEYS[axis]] += offset - this.getScroll();
       }
     }, {
       key: 'getViewportSize',
@@ -490,6 +495,14 @@ module.exports = require('react/lib/ReactDOM');
         var axis = this.props.axis;
 
         return scrollParent === window ? window[INNER_SIZE_KEYS[axis]] : scrollParent[CLIENT_SIZE_KEYS[axis]];
+      }
+    }, {
+      key: 'getScrollSize',
+      value: function getScrollSize() {
+        var scrollParent = this.scrollParent;
+        var axis = this.props.axis;
+
+        return scrollParent === window ? document.body[SCROLL_SIZE_KEYS[axis]] : scrollParent[SCROLL_SIZE_KEYS[axis]];
       }
     }, {
       key: 'getStartAndEnd',
@@ -530,19 +543,34 @@ module.exports = require('react/lib/ReactDOM');
       }
     }, {
       key: 'updateFrame',
-      value: function updateFrame() {
+      value: function updateFrame(cb) {
+        this.updateScrollParent();
+        if (typeof cb != 'function') cb = NOOP;
         switch (this.props.type) {
           case 'simple':
-            return this.updateSimpleFrame();
+            return this.updateSimpleFrame(cb);
           case 'variable':
-            return this.updateVariableFrame();
+            return this.updateVariableFrame(cb);
           case 'uniform':
-            return this.updateUniformFrame();
+            return this.updateUniformFrame(cb);
         }
       }
     }, {
+      key: 'updateScrollParent',
+      value: function updateScrollParent() {
+        var prev = this.scrollParent;
+        this.scrollParent = this.getScrollParent();
+        if (prev === this.scrollParent) return;
+        if (prev) {
+          prev.removeEventListener('scroll', this.updateFrame);
+          prev.removeEventListener('mousewheel', NOOP);
+        }
+        this.scrollParent.addEventListener('scroll', this.updateFrame);
+        this.scrollParent.addEventListener('mousewheel', NOOP);
+      }
+    }, {
       key: 'updateSimpleFrame',
-      value: function updateSimpleFrame() {
+      value: function updateSimpleFrame(cb) {
         var _getStartAndEnd = this.getStartAndEnd();
 
         var end = _getStartAndEnd.end;
@@ -558,26 +586,26 @@ module.exports = require('react/lib/ReactDOM');
           elEnd = this.getOffset(lastItemEl) + lastItemEl[OFFSET_SIZE_KEYS[axis]] - this.getOffset(firstItemEl);
         }
 
-        if (elEnd > end) return;
+        if (elEnd > end) return cb();
 
-        var _props2 = this.props;
-        var pageSize = _props2.pageSize;
-        var length = _props2.length;
+        var _props3 = this.props;
+        var pageSize = _props3.pageSize;
+        var length = _props3.length;
 
-        this.setState({ size: Math.min(this.state.size + pageSize, length) });
+        this.setState({ size: Math.min(this.state.size + pageSize, length) }, cb);
       }
     }, {
       key: 'updateVariableFrame',
-      value: function updateVariableFrame() {
+      value: function updateVariableFrame(cb) {
         if (!this.props.itemSizeGetter) this.cacheSizes();
 
         var _getStartAndEnd2 = this.getStartAndEnd();
 
         var start = _getStartAndEnd2.start;
         var end = _getStartAndEnd2.end;
-        var _props3 = this.props;
-        var length = _props3.length;
-        var pageSize = _props3.pageSize;
+        var _props4 = this.props;
+        var length = _props4.length;
+        var pageSize = _props4.pageSize;
 
         var space = 0;
         var from = 0;
@@ -586,7 +614,7 @@ module.exports = require('react/lib/ReactDOM');
 
         while (from < maxFrom) {
           var itemSize = this.getSizeOf(from);
-          if (isNaN(itemSize) || space + itemSize > start) break;
+          if (itemSize == null || space + itemSize > start) break;
           space += itemSize;
           ++from;
         }
@@ -595,7 +623,7 @@ module.exports = require('react/lib/ReactDOM');
 
         while (size < maxSize && space < end) {
           var itemSize = this.getSizeOf(from + size);
-          if (isNaN(itemSize)) {
+          if (itemSize == null) {
             size = Math.min(size + pageSize, maxSize);
             break;
           }
@@ -603,21 +631,21 @@ module.exports = require('react/lib/ReactDOM');
           ++size;
         }
 
-        this.setState({ from: from, size: size });
+        this.setState({ from: from, size: size }, cb);
       }
     }, {
       key: 'updateUniformFrame',
-      value: function updateUniformFrame() {
+      value: function updateUniformFrame(cb) {
         var _getItemSizeAndItemsPerRow = this.getItemSizeAndItemsPerRow();
 
         var itemSize = _getItemSizeAndItemsPerRow.itemSize;
         var itemsPerRow = _getItemSizeAndItemsPerRow.itemsPerRow;
 
-        if (!itemSize || !itemsPerRow) return;
+        if (!itemSize || !itemsPerRow) return cb();
 
-        var _props4 = this.props;
-        var length = _props4.length;
-        var pageSize = _props4.pageSize;
+        var _props5 = this.props;
+        var length = _props5.length;
+        var pageSize = _props5.pageSize;
 
         var _getStartAndEnd3 = this.getStartAndEnd();
 
@@ -628,27 +656,38 @@ module.exports = require('react/lib/ReactDOM');
 
         var size = this.constrainSize((Math.ceil((end - start) / itemSize) + 1) * itemsPerRow, length, pageSize, from);
 
-        return this.setState({ itemsPerRow: itemsPerRow, from: from, itemSize: itemSize, size: size });
+        return this.setState({ itemsPerRow: itemsPerRow, from: from, itemSize: itemSize, size: size }, cb);
       }
     }, {
       key: 'getSpaceBefore',
       value: function getSpaceBefore(index) {
+        var cache = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+
+        if (cache[index] != null) return cache[index];
 
         // Try the static itemSize.
         var _state2 = this.state;
         var itemSize = _state2.itemSize;
         var itemsPerRow = _state2.itemsPerRow;
 
-        if (itemSize) return Math.ceil(index / itemsPerRow) * itemSize;
+        if (itemSize) {
+          return cache[index] = Math.floor(index / itemsPerRow) * itemSize;
+        }
 
-        // Finally, accumulate sizes of items 0 - index.
-        var space = 0;
-        for (var i = 0; i < index; ++i) {
+        // Find the closest space to index there is a cached value for.
+        var from = index;
+        while (from > 0 && cache[--from] == null);
+
+        // Finally, accumulate sizes of items from - index.
+        var space = cache[from] || 0;
+        for (var i = from; i < index; ++i) {
+          cache[i] = space;
           var _itemSize = this.getSizeOf(i);
-          if (isNaN(_itemSize)) break;
+          if (_itemSize == null) break;
           space += _itemSize;
         }
-        return space;
+
+        return cache[index] = space;
       }
     }, {
       key: 'cacheSizes',
@@ -665,24 +704,31 @@ module.exports = require('react/lib/ReactDOM');
     }, {
       key: 'getSizeOf',
       value: function getSizeOf(index) {
+        var cache = this.cache;
+        var items = this.items;
+        var _props6 = this.props;
+        var axis = _props6.axis;
+        var itemSizeGetter = _props6.itemSizeGetter;
+        var type = _props6.type;
+        var _state3 = this.state;
+        var from = _state3.from;
+        var itemSize = _state3.itemSize;
+        var size = _state3.size;
 
         // Try the static itemSize.
-        var itemSize = this.state.itemSize;
-
         if (itemSize) return itemSize;
 
         // Try the itemSizeGetter.
-        var itemSizeGetter = this.props.itemSizeGetter;
-
         if (itemSizeGetter) return itemSizeGetter(index);
 
         // Try the cache.
-        var cache = this.cache;
+        if (index in cache) return cache[index];
 
-        if (cache[index]) return cache[index];
-
-        // We don't know the size.
-        return NaN;
+        // Try the DOM.
+        if (type === 'simple' && index >= from && index < from + size && items) {
+          var itemEl = findDOMNode(items).children[index - from];
+          if (itemEl) return itemEl[OFFSET_SIZE_KEYS[axis]];
+        }
       }
     }, {
       key: 'constrainFrom',
@@ -699,7 +745,7 @@ module.exports = require('react/lib/ReactDOM');
     }, {
       key: 'scrollTo',
       value: function scrollTo(index) {
-        this.setScroll(this.getSpaceBefore(index));
+        if (index != null) this.setScroll(this.getSpaceBefore(index));
       }
     }, {
       key: 'scrollAround',
@@ -715,40 +761,37 @@ module.exports = require('react/lib/ReactDOM');
     }, {
       key: 'getVisibleRange',
       value: function getVisibleRange() {
-        var el = findDOMNode(this);
-        var itemEls = el.children;
-        var top = this.getOffset(el);
-        var sizeKey = OFFSET_SIZE_KEYS[this.props.axis];
+        var _state4 = this.state;
+        var from = _state4.from;
+        var size = _state4.size;
 
         var _getStartAndEnd4 = this.getStartAndEnd(0);
 
         var start = _getStartAndEnd4.start;
         var end = _getStartAndEnd4.end;
 
-        var first = 0,
-            last = 0;
-        for (var i = 0; i < itemEls.length; ++i) {
-          var itemEl = itemEls[i];
-          var itemStart = this.getOffset(itemEl) - top;
-          var itemEnd = itemStart + itemEl[sizeKey];
-          if (itemStart <= start && itemEnd > start) first = i;
-          if (itemStart < end && itemEnd >= end) last = i;
+        var cache = {};
+        var first = undefined,
+            last = undefined;
+        for (var i = from; i < from + size; ++i) {
+          var itemStart = this.getSpaceBefore(i, cache);
+          var itemEnd = itemStart + this.getSizeOf(i);
+          if (first == null && itemEnd > start) first = i;
+          if (first != null && itemStart < end) last = i;
         }
-        var from = this.state.from;
-
-        return [from + first, from + last];
+        return [first, last];
       }
     }, {
       key: 'renderItems',
       value: function renderItems() {
         var _this = this;
 
-        var _props5 = this.props;
-        var itemRenderer = _props5.itemRenderer;
-        var itemsRenderer = _props5.itemsRenderer;
-        var _state3 = this.state;
-        var from = _state3.from;
-        var size = _state3.size;
+        var _props7 = this.props;
+        var itemRenderer = _props7.itemRenderer;
+        var itemsRenderer = _props7.itemsRenderer;
+        var _state5 = this.state;
+        var from = _state5.from;
+        var size = _state5.size;
 
         var items = [];
         for (var i = 0; i < size; ++i) {
@@ -760,26 +803,32 @@ module.exports = require('react/lib/ReactDOM');
     }, {
       key: 'render',
       value: function render() {
-        var _props6 = this.props;
-        var axis = _props6.axis;
-        var length = _props6.length;
-        var type = _props6.type;
-        var useTranslate3d = _props6.useTranslate3d;
-        var from = this.state.from;
+        var _props8 = this.props;
+        var axis = _props8.axis;
+        var length = _props8.length;
+        var type = _props8.type;
+        var useTranslate3d = _props8.useTranslate3d;
+        var _state6 = this.state;
+        var from = _state6.from;
+        var itemsPerRow = _state6.itemsPerRow;
 
         var items = this.renderItems();
         if (type === 'simple') return items;
 
         var style = { position: 'relative' };
-        var size = this.getSpaceBefore(length);
-        style[SIZE_KEYS[axis]] = size;
-        if (size && axis === 'x') style.overflowX = 'hidden';
-        var offset = this.getSpaceBefore(from);
+        var cache = {};
+        var bottom = Math.ceil(length / itemsPerRow) * itemsPerRow;
+        var size = this.getSpaceBefore(bottom, cache);
+        if (size) {
+          style[SIZE_KEYS[axis]] = size;
+          if (axis === 'x') style.overflowX = 'hidden';
+        }
+        var offset = this.getSpaceBefore(from, cache);
         var x = axis === 'x' ? offset : 0;
         var y = axis === 'y' ? offset : 0;
         var transform = useTranslate3d ? 'translate3d(' + x + 'px, ' + y + 'px, 0)' : 'translate(' + x + 'px, ' + y + 'px)';
         var listStyle = {
-          MsTransform: transform,
+          msTransform: transform,
           WebkitTransform: transform,
           transform: transform
         };
@@ -2221,39 +2270,36 @@ module.exports = getNative;
 
 },{}],23:[function(require,module,exports){
 /**
- * lodash 3.0.4 (Custom Build) <https://lodash.com/>
- * Build: `lodash modern modularize exports="npm" -o ./`
- * Copyright 2012-2015 The Dojo Foundation <http://dojofoundation.org/>
+ * lodash 3.0.8 (Custom Build) <https://lodash.com/>
+ * Build: `lodash modularize exports="npm" -o ./`
+ * Copyright 2012-2016 The Dojo Foundation <http://dojofoundation.org/>
  * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
- * Copyright 2009-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+ * Copyright 2009-2016 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
  * Available under MIT license <https://lodash.com/license>
  */
 
-/**
- * Checks if `value` is object-like.
- *
- * @private
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
- */
-function isObjectLike(value) {
-  return !!value && typeof value == 'object';
-}
+/** Used as references for various `Number` constants. */
+var MAX_SAFE_INTEGER = 9007199254740991;
 
-/** Used for native method references. */
+/** `Object#toString` result references. */
+var argsTag = '[object Arguments]',
+    funcTag = '[object Function]',
+    genTag = '[object GeneratorFunction]';
+
+/** Used for built-in method references. */
 var objectProto = Object.prototype;
 
 /** Used to check objects for own properties. */
 var hasOwnProperty = objectProto.hasOwnProperty;
 
-/** Native method references. */
-var propertyIsEnumerable = objectProto.propertyIsEnumerable;
-
 /**
- * Used as the [maximum length](http://ecma-international.org/ecma-262/6.0/#sec-number.max_safe_integer)
- * of an array-like value.
+ * Used to resolve the [`toStringTag`](http://ecma-international.org/ecma-262/6.0/#sec-object.prototype.tostring)
+ * of values.
  */
-var MAX_SAFE_INTEGER = 9007199254740991;
+var objectToString = objectProto.toString;
+
+/** Built-in value references. */
+var propertyIsEnumerable = objectProto.propertyIsEnumerable;
 
 /**
  * The base implementation of `_.property` without support for deep paths.
@@ -2281,31 +2327,7 @@ function baseProperty(key) {
 var getLength = baseProperty('length');
 
 /**
- * Checks if `value` is array-like.
- *
- * @private
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is array-like, else `false`.
- */
-function isArrayLike(value) {
-  return value != null && isLength(getLength(value));
-}
-
-/**
- * Checks if `value` is a valid array-like length.
- *
- * **Note:** This function is based on [`ToLength`](http://ecma-international.org/ecma-262/6.0/#sec-tolength).
- *
- * @private
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a valid length, else `false`.
- */
-function isLength(value) {
-  return typeof value == 'number' && value > -1 && value % 1 == 0 && value <= MAX_SAFE_INTEGER;
-}
-
-/**
- * Checks if `value` is classified as an `arguments` object.
+ * Checks if `value` is likely an `arguments` object.
  *
  * @static
  * @memberOf _
@@ -2321,8 +2343,172 @@ function isLength(value) {
  * // => false
  */
 function isArguments(value) {
-  return isObjectLike(value) && isArrayLike(value) &&
-    hasOwnProperty.call(value, 'callee') && !propertyIsEnumerable.call(value, 'callee');
+  // Safari 8.1 incorrectly makes `arguments.callee` enumerable in strict mode.
+  return isArrayLikeObject(value) && hasOwnProperty.call(value, 'callee') &&
+    (!propertyIsEnumerable.call(value, 'callee') || objectToString.call(value) == argsTag);
+}
+
+/**
+ * Checks if `value` is array-like. A value is considered array-like if it's
+ * not a function and has a `value.length` that's an integer greater than or
+ * equal to `0` and less than or equal to `Number.MAX_SAFE_INTEGER`.
+ *
+ * @static
+ * @memberOf _
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is array-like, else `false`.
+ * @example
+ *
+ * _.isArrayLike([1, 2, 3]);
+ * // => true
+ *
+ * _.isArrayLike(document.body.children);
+ * // => true
+ *
+ * _.isArrayLike('abc');
+ * // => true
+ *
+ * _.isArrayLike(_.noop);
+ * // => false
+ */
+function isArrayLike(value) {
+  return value != null && isLength(getLength(value)) && !isFunction(value);
+}
+
+/**
+ * This method is like `_.isArrayLike` except that it also checks if `value`
+ * is an object.
+ *
+ * @static
+ * @memberOf _
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an array-like object, else `false`.
+ * @example
+ *
+ * _.isArrayLikeObject([1, 2, 3]);
+ * // => true
+ *
+ * _.isArrayLikeObject(document.body.children);
+ * // => true
+ *
+ * _.isArrayLikeObject('abc');
+ * // => false
+ *
+ * _.isArrayLikeObject(_.noop);
+ * // => false
+ */
+function isArrayLikeObject(value) {
+  return isObjectLike(value) && isArrayLike(value);
+}
+
+/**
+ * Checks if `value` is classified as a `Function` object.
+ *
+ * @static
+ * @memberOf _
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is correctly classified, else `false`.
+ * @example
+ *
+ * _.isFunction(_);
+ * // => true
+ *
+ * _.isFunction(/abc/);
+ * // => false
+ */
+function isFunction(value) {
+  // The use of `Object#toString` avoids issues with the `typeof` operator
+  // in Safari 8 which returns 'object' for typed array and weak map constructors,
+  // and PhantomJS 1.9 which returns 'function' for `NodeList` instances.
+  var tag = isObject(value) ? objectToString.call(value) : '';
+  return tag == funcTag || tag == genTag;
+}
+
+/**
+ * Checks if `value` is a valid array-like length.
+ *
+ * **Note:** This function is loosely based on [`ToLength`](http://ecma-international.org/ecma-262/6.0/#sec-tolength).
+ *
+ * @static
+ * @memberOf _
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a valid length, else `false`.
+ * @example
+ *
+ * _.isLength(3);
+ * // => true
+ *
+ * _.isLength(Number.MIN_VALUE);
+ * // => false
+ *
+ * _.isLength(Infinity);
+ * // => false
+ *
+ * _.isLength('3');
+ * // => false
+ */
+function isLength(value) {
+  return typeof value == 'number' &&
+    value > -1 && value % 1 == 0 && value <= MAX_SAFE_INTEGER;
+}
+
+/**
+ * Checks if `value` is the [language type](https://es5.github.io/#x8) of `Object`.
+ * (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
+ *
+ * @static
+ * @memberOf _
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an object, else `false`.
+ * @example
+ *
+ * _.isObject({});
+ * // => true
+ *
+ * _.isObject([1, 2, 3]);
+ * // => true
+ *
+ * _.isObject(_.noop);
+ * // => true
+ *
+ * _.isObject(null);
+ * // => false
+ */
+function isObject(value) {
+  var type = typeof value;
+  return !!value && (type == 'object' || type == 'function');
+}
+
+/**
+ * Checks if `value` is object-like. A value is object-like if it's not `null`
+ * and has a `typeof` result of "object".
+ *
+ * @static
+ * @memberOf _
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
+ * @example
+ *
+ * _.isObjectLike({});
+ * // => true
+ *
+ * _.isObjectLike([1, 2, 3]);
+ * // => true
+ *
+ * _.isObjectLike(_.noop);
+ * // => false
+ *
+ * _.isObjectLike(null);
+ * // => false
+ */
+function isObjectLike(value) {
+  return !!value && typeof value == 'object';
 }
 
 module.exports = isArguments;
@@ -5767,6 +5953,7 @@ var HTMLDOMPropertyConfig = {
     multiple: MUST_USE_PROPERTY | HAS_BOOLEAN_VALUE,
     muted: MUST_USE_PROPERTY | HAS_BOOLEAN_VALUE,
     name: null,
+    nonce: MUST_USE_ATTRIBUTE,
     noValidate: HAS_BOOLEAN_VALUE,
     open: HAS_BOOLEAN_VALUE,
     optimum: null,
@@ -5778,6 +5965,7 @@ var HTMLDOMPropertyConfig = {
     readOnly: MUST_USE_PROPERTY | HAS_BOOLEAN_VALUE,
     rel: null,
     required: HAS_BOOLEAN_VALUE,
+    reversed: HAS_BOOLEAN_VALUE,
     role: MUST_USE_ATTRIBUTE,
     rows: MUST_USE_ATTRIBUTE | HAS_POSITIVE_NUMERIC_VALUE,
     rowSpan: null,
@@ -5828,8 +6016,8 @@ var HTMLDOMPropertyConfig = {
      */
     // autoCapitalize and autoCorrect are supported in Mobile Safari for
     // keyboard hints.
-    autoCapitalize: null,
-    autoCorrect: null,
+    autoCapitalize: MUST_USE_ATTRIBUTE,
+    autoCorrect: MUST_USE_ATTRIBUTE,
     // autoSave allows WebKit/Blink to persist values of input fields on page reloads
     autoSave: null,
     // color is for Safari mask-icon link
@@ -5860,9 +6048,7 @@ var HTMLDOMPropertyConfig = {
     httpEquiv: 'http-equiv'
   },
   DOMPropertyNames: {
-    autoCapitalize: 'autocapitalize',
     autoComplete: 'autocomplete',
-    autoCorrect: 'autocorrect',
     autoFocus: 'autofocus',
     autoPlay: 'autoplay',
     autoSave: 'autosave',
@@ -6223,6 +6409,7 @@ assign(React, {
 });
 
 React.__SECRET_DOM_DO_NOT_USE_OR_YOU_WILL_BE_FIRED = ReactDOM;
+React.__SECRET_DOM_SERVER_DO_NOT_USE_OR_YOU_WILL_BE_FIRED = ReactDOMServer;
 
 module.exports = React;
 },{"./Object.assign":46,"./ReactDOM":59,"./ReactDOMServer":69,"./ReactIsomorphic":87,"./deprecated":130}],49:[function(require,module,exports){
@@ -10264,7 +10451,10 @@ var ReactDOMOption = {
       }
     });
 
-    nativeProps.children = content;
+    if (content) {
+      nativeProps.children = content;
+    }
+
     return nativeProps;
   }
 
@@ -10304,7 +10494,7 @@ function updateOptionsIfPendingUpdateAndMounted() {
     var value = LinkedValueUtils.getValue(props);
 
     if (value != null) {
-      updateOptions(this, props, value);
+      updateOptions(this, Boolean(props.multiple), value);
     }
   }
 }
@@ -11383,7 +11573,9 @@ var DOM_OPERATION_TYPES = {
   'setValueForProperty': 'update attribute',
   'setValueForAttribute': 'update attribute',
   'deleteValueForProperty': 'remove attribute',
-  'dangerouslyReplaceNodeWithMarkupByID': 'replace'
+  'setValueForStyles': 'update styles',
+  'replaceNodeWithMarkup': 'replace',
+  'updateTextContent': 'set textContent'
 };
 
 function getTotalTime(measurements) {
@@ -12117,6 +12309,10 @@ var ReactEmptyComponentInjection = {
   }
 };
 
+function registerNullComponentID() {
+  ReactEmptyComponentRegistry.registerNullComponentID(this._rootNodeID);
+}
+
 var ReactEmptyComponent = function (instantiate) {
   this._currentElement = null;
   this._rootNodeID = null;
@@ -12125,7 +12321,7 @@ var ReactEmptyComponent = function (instantiate) {
 assign(ReactEmptyComponent.prototype, {
   construct: function (element) {},
   mountComponent: function (rootID, transaction, context) {
-    ReactEmptyComponentRegistry.registerNullComponentID(rootID);
+    transaction.getReactMountReady().enqueue(registerNullComponentID, this);
     this._rootNodeID = rootID;
     return ReactReconciler.mountComponent(this._renderedComponent, rootID, transaction, context);
   },
@@ -16431,7 +16627,7 @@ module.exports = ReactUpdates;
 
 'use strict';
 
-module.exports = '0.14.2';
+module.exports = '0.14.8';
 },{}],109:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -17526,6 +17722,7 @@ var warning = require('fbjs/lib/warning');
  */
 var EventInterface = {
   type: null,
+  target: null,
   // currentTarget is set when dispatching; no use in copying it here
   currentTarget: emptyFunction.thatReturnsNull,
   eventPhase: null,
@@ -17559,8 +17756,6 @@ function SyntheticEvent(dispatchConfig, dispatchMarker, nativeEvent, nativeEvent
   this.dispatchConfig = dispatchConfig;
   this.dispatchMarker = dispatchMarker;
   this.nativeEvent = nativeEvent;
-  this.target = nativeEventTarget;
-  this.currentTarget = nativeEventTarget;
 
   var Interface = this.constructor.Interface;
   for (var propName in Interface) {
@@ -17571,7 +17766,11 @@ function SyntheticEvent(dispatchConfig, dispatchMarker, nativeEvent, nativeEvent
     if (normalize) {
       this[propName] = normalize(nativeEvent);
     } else {
-      this[propName] = nativeEvent[propName];
+      if (propName === 'target') {
+        this.target = nativeEventTarget;
+      } else {
+        this[propName] = nativeEvent[propName];
+      }
     }
   }
 
@@ -20691,11 +20890,14 @@ module.exports = focusNode;
  * @typechecks
  */
 
+/* eslint-disable fb-www/typeof-undefined */
+
 /**
  * Same as document.activeElement but wraps in a try-catch block. In IE it is
  * not safe to call document.activeElement if there is nothing focused.
  *
- * The activeElement will be null only if the document or document body is not yet defined.
+ * The activeElement will be null only if the document or document body is not
+ * yet defined.
  */
 'use strict';
 
@@ -20703,7 +20905,6 @@ function getActiveElement() /*?DOMElement*/{
   if (typeof document === 'undefined') {
     return null;
   }
-
   try {
     return document.activeElement || document.body;
   } catch (e) {
@@ -20949,7 +21150,7 @@ module.exports = hyphenateStyleName;
  * will remain to ensure logic does not differ in production.
  */
 
-var invariant = function (condition, format, a, b, c, d, e, f) {
+function invariant(condition, format, a, b, c, d, e, f) {
   if (process.env.NODE_ENV !== 'production') {
     if (format === undefined) {
       throw new Error('invariant requires an error message argument');
@@ -20963,15 +21164,16 @@ var invariant = function (condition, format, a, b, c, d, e, f) {
     } else {
       var args = [a, b, c, d, e, f];
       var argIndex = 0;
-      error = new Error('Invariant Violation: ' + format.replace(/%s/g, function () {
+      error = new Error(format.replace(/%s/g, function () {
         return args[argIndex++];
       }));
+      error.name = 'Invariant Violation';
     }
 
     error.framesToPop = 1; // we don't care about invariant's own frame
     throw error;
   }
-};
+}
 
 module.exports = invariant;
 }).call(this,require('_process'))
@@ -21236,18 +21438,23 @@ module.exports = performance || {};
 'use strict';
 
 var performance = require('./performance');
-var curPerformance = performance;
+
+var performanceNow;
 
 /**
  * Detect if we can use `window.performance.now()` and gracefully fallback to
  * `Date.now()` if it doesn't exist. We need to support Firefox < 15 for now
  * because of Facebook's testing infrastructure.
  */
-if (!curPerformance || !curPerformance.now) {
-  curPerformance = Date;
+if (performance.now) {
+  performanceNow = function () {
+    return performance.now();
+  };
+} else {
+  performanceNow = function () {
+    return Date.now();
+  };
 }
-
-var performanceNow = curPerformance.now.bind(curPerformance);
 
 module.exports = performanceNow;
 },{"./performance":175}],177:[function(require,module,exports){

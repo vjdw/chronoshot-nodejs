@@ -3,8 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "build": "browserify -e /home/vin/code/chronoshot/chronoshot/client/global.jsx -o /home/vin/code/chronoshot/chronoshot/public/javascripts/global.js -t babelify --presets [ es2015 react ]",
-    "start": "node ./bin/www"
+    "build": "browserify -e /home/vin/code/chronoshot/client/global.jsx -o /home/vin/code/chronoshot/public/javascripts/global.js -t babelify --presets [ es2015 react ]",
+    "start": "node /home/vin/code/chronoshot/bin/www"
   },
   "dependencies": {
     "body-parser": "~1.13.2",
@@ -30,6 +30,7 @@
     "vinyl-transform": "~1.0.0",
     "async": "~1.5.0",
     "exif": "~0.4.0",
-    "ejs": "~2.4.1"
+    "ejs": "~2.4.1",
+    "chokidar": "~1.4.3"
   }
 }
