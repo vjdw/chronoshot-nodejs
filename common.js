@@ -32,14 +32,15 @@ var thumbnailGeneratorQueue = async.queue(function (task, callback) {
                           .crop('200', '200')
                           .toBuffer(function (err, buffer) {
                             if (err) {
-                              callback(err);
+                              console.log('GraphicsMagick error: ' + error.message);
+                              callback();
                             }
                             else {
                               try {
                                 new ExifImage({ image: task.filePath}, function (error, exifData) {
                                   if (error) {
                                     console.log('Exif error: ' + error.message);
-                                    callback(error);
+                                    callback();
                                   }
                                   else {
                                     //console.log(exifData.exif.DateTimeOriginal);
@@ -55,7 +56,7 @@ var thumbnailGeneratorQueue = async.queue(function (task, callback) {
                               }
                               catch (err) {
                                 console.log('Error: ' + err.message);
-                                callback(err);
+                                callback();
                               }
                             }
                           });
