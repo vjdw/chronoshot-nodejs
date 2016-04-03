@@ -21,7 +21,6 @@ var thumbnailGeneratorQueue = async.queue(function (task, callback) {
                         
                         if (doc !== null) {
                             console.log('Found a file, but it\'s already in the database: ' + task.filePath);
-                            callback();
                         }
                         else {
                           // filePath not in database, generate thumbnail and add it.
@@ -33,34 +32,30 @@ var thumbnailGeneratorQueue = async.queue(function (task, callback) {
                           .toBuffer(function (err, buffer) {
                             if (err) {
                               console.log('GraphicsMagick error: ' + error.message);
-                              callback();
                             }
                             else {
                               try {
                                 new ExifImage({ image: task.filePath}, function (error, exifData) {
                                   if (error) {
                                     console.log('Exif error: ' + error.message);
-                                    callback();
                                   }
                                   else {
-                                    //console.log(exifData.exif.DateTimeOriginal);
                                     var dateTimeOriginal = exifData.exif.DateTimeOriginal;
                                     
                                     collection.insert({"filename": task.filePath, "datetime":dateTimeOriginal, "thumbnail": buffer}, function(err, result) {
                                       var insertResult = (err === null) ? { msg: 'Inserted ' + task.filePath } : { msg: err };
                                       console.log(insertResult);
-                                      callback();
                                     });
                                   }
                                 });
                               }
                               catch (err) {
                                 console.log('Error: ' + err.message);
-                                callback();
                               }
                             }
                           });
-                        }              
+                        }
+                        return callback();          
                       });
 }, maxAsyncThreads);
 
