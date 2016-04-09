@@ -34,12 +34,13 @@ collection.index( {filename: 1} );
 // Monitor photo directory for changes.
 var chokidar = require('chokidar');
 //chokidar.watch('/home/vin/code/photos/', {ignored: /[\/\\]\./}).on('all', function(event, path) {
-chokidar.watch('/media/data/photos/', {ignored: /[\/\\]\./}).on('all', function(event, path) {
-  //console.log(event, path);
-  common.EnqueueImageImport({filePath: path, db: db}, function (err) {
-    if (err) throw err;
-  });
-});
+chokidar.watch('/media/data/photos/', {ignored: /[\/\\]\./, awaitWriteFinish: true})
+        .on('add', function(path, event) {
+            //console.log(path);
+            common.EnqueueImageImport({filePath: path, db: db}, function (err) {
+                if (err) throw err;
+            });
+        });
 
 //routes.
 
