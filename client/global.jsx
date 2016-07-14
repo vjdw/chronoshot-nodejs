@@ -69,7 +69,7 @@ const customStyles = {
 };
 
 var ImagePopup = React.createClass({
- 
+
   getInitialState: function() {
     return { modalIsOpen: false };
   },
